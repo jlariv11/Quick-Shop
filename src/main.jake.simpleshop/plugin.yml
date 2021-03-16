@@ -3,3 +3,10 @@
   version: 1.0
   author: jlariv11
   description: Adds easy to use shops using any currency
+
+  commands:
+    openshop:
+      usage: /openshop
+      description: opens the shop interface
+      permission: simpleshops.shop
+      permission-message: You do not have permission to use this command.
