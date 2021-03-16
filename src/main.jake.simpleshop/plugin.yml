@@ -1,0 +1,5 @@
+  name: SimpleShop
+  main: main.jake.simpleshop.SimpleShop
+  version: 1.0
+  author: jlariv11
+  description: Adds easy to use shops using any currency
