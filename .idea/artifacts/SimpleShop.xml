@@ -4,7 +4,7 @@
     <root id="archive" name="SimpleShop.jar">
       <element id="module-output" name="Simple-Shop" />
       <element id="library" level="project" name="bukkit" />
-      <element id="file-copy" path="$PROJECT_DIR$/src/main.jake.simpleshop/plugin.yml" />
+      <element id="file-copy" path="$PROJECT_DIR$/src/main/jake/simpleshop/plugin.yml" />
     </root>
   </artifact>
 </component>
