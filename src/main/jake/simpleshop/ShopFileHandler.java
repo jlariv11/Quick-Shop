@@ -26,8 +26,8 @@ public class ShopFileHandler {
         try {
             FileWriter writer = new FileWriter(shopfile);
             for (Shop shop : plugin.shops) {
-                writer.write(shop.getItem().getData().getItemType().name() + "," + shop.getItem().getAmount() + "," +
-                        shop.getSeller().getName() + "," + shop.getCost() + "," + shop.getAmountPerSell() + "," + shop.getBuffer());
+                writer.write(shop.getItem().getType().name() + "," + shop.getItem().getAmount() + "," +
+                        shop.getSeller().getName() + "," + shop.getCost() + "," + shop.getAmountPerSell() + "," + shop.getBuffer() + "\n");
             }
             writer.close();
         }catch (IOException e){
