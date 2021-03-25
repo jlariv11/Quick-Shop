@@ -3,8 +3,8 @@
     <output-path>$PROJECT_DIR$/../TestBukkitServer/plugins</output-path>
     <root id="archive" name="SimpleShop.jar">
       <element id="module-output" name="Simple-Shop" />
-      <element id="library" level="project" name="bukkit" />
       <element id="file-copy" path="$PROJECT_DIR$/src/main/jake/simpleshop/plugin.yml" />
+      <element id="library" level="project" name="spigot-1.16.5" />
     </root>
   </artifact>
 </component>

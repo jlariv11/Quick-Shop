@@ -3,6 +3,7 @@ package main.jake.simpleshop;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -18,6 +19,7 @@ public class SimpleShop extends JavaPlugin {
     FileConfiguration config = this.getConfig();
     List<Shop> shops = new ArrayList<>();
     ShopFileHandler fileHandler = new ShopFileHandler(this);
+    public Material currency;
 
 
     @Override
@@ -26,11 +28,20 @@ public class SimpleShop extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new Events(this), this);
         Commands commands = new Commands(this);
         getCommand(commands.shop).setExecutor(commands);
-        config.addDefault("itemCurrency", true);
-        config.addDefault("item", "minecraft:diamond");
+        getCommand(commands.adminShop).setExecutor(commands);
+        getCommand(commands.removeShop).setExecutor(commands);
+        //getCommand("test").setExecutor(commands);
+        //config.addDefault("itemCurrency", true);
+        config.addDefault("item", "DIAMOND");
         config.options().copyDefaults(true);
         saveConfig();
         shops = fileHandler.read();
+        String material = config.getString("item");
+        if(material != null) {
+            currency = Material.getMaterial(material);
+        }else{
+            currency = Material.DIAMOND;
+        }
 
     }
 
@@ -60,11 +71,12 @@ public class SimpleShop extends JavaPlugin {
             ItemMeta m = s.getItemMeta();
             if(m != null){
                 List<String> lore = new ArrayList<>();
-                String diamond = " diamond";
-                if(shop.getCost() > 1){
-                    diamond += "s";
+                String costItem = " " + getConfig().getString("item").toLowerCase();
+                if(shop.isInfinite()) {
+                    lore.add("Infinite: " + shop.getAmountPerSell() + " for " + shop.getCost() + costItem);
+                }else{
+                    lore.add("Cost: " + shop.getCost() + costItem + " for " + shop.getAmountPerSell());
                 }
-                lore.add("Cost: " + shop.getCost() + diamond + " for " + shop.getAmountPerSell());
                 m.setLore(lore);
                 s.setItemMeta(m);
                 shopInv.setItem(i, s);
@@ -74,18 +86,42 @@ public class SimpleShop extends JavaPlugin {
         player.openInventory(shopInv);
     }
 
-    public void setupAndOpenAddItem(Player player){
+    public void setupAndOpenAddItem(Player player, boolean admin){
 
-        Inventory addItemInv = getServer().createInventory(null, 9, "Sell an Item");
+        Inventory addItemInv = getServer().createInventory(null, 9, admin ? "Sell an Item(Infinite)" : "Sell an Item");
 
-        ItemStack stack = new ItemStack(Material.DIAMOND, 1);
+        ItemStack stack = new ItemStack(currency, 1);
         ItemStack confirm = new ItemStack(Material.EMERALD, 1);
         ItemMeta meta = confirm.getItemMeta();
         meta.setDisplayName(ChatColor.GREEN + "Confirm");
         confirm.setItemMeta(meta);
+        ItemMeta cost = stack.getItemMeta();
+        cost.setDisplayName(ChatColor.AQUA + "Cost: " + stack.getAmount());
+        stack.setItemMeta(cost);
         addItemInv.setItem(7, stack);
         addItemInv.setItem(8, confirm);
         player.openInventory(addItemInv);
+    }
+
+    public void setupRemoveShop(Player player){
+        int slotsNeeded = (int)Math.ceil((shops.size() + 1) / 9.0) * 9;
+        Inventory removeShopInv = getServer().createInventory(null, slotsNeeded, "Remove Shops");
+
+        for(int i = 0; i < shops.size(); i++){
+            Shop shop = shops.get(i);
+            ItemStack s = shop.getItem();
+            ItemMeta m = s.getItemMeta();
+            if(shop.getSeller().getUniqueId().equals(player.getUniqueId()) || player.isOp()) {
+                if (m != null) {
+                    List<String> lore = new ArrayList<>();
+                    lore.add(player.getDisplayName() + "'s " + "Shop");
+                    m.setLore(lore);
+                    s.setItemMeta(m);
+                    removeShopInv.setItem(i, s);
+                }
+            }
+        }
+        player.openInventory(removeShopInv);
     }
 
 }

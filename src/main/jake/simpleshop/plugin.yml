@@ -2,11 +2,28 @@
   main: main.jake.simpleshop.SimpleShop
   version: 1.0
   author: jlariv11
-  description: Adds easy to use shops using any currency
+  description: Adds easy to use shops using items as currency
+  api-version: 1.16
 
   commands:
     openshop:
       usage: /openshop
       description: opens the shop interface
-      permission: simpleshops.shop
+      permission: simpleshop.shop
+      permission-message: You do not have permission to use this command.
+    adminshop:
+      usage: /adminshop
+      description: opens the admin shop interface
+      permission: simpleshop.adminshop
+      permission-message: You do not have permission to use this command.
+    removeshop:
+      usage: /removeshop
+      description: opens the remove shop interface
+      permission: simpleshop.remove
+      permission-message: You do not have permission to use this command.
+
+    test:
+      usage: /test
+      description: opens the shop interface
+      permission: simpleshop.test
       permission-message: You do not have permission to use this command.
