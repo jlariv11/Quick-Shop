@@ -1,13 +1,9 @@
-package main.jake.simpleshop;
+package main.jake.quickshop;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.inventory.meta.ItemMeta;
-
-import javax.annotation.Nonnull;
 
 public class Shop {
 
@@ -17,7 +13,7 @@ public class Shop {
     private int cost;
     private int buffer;
     private boolean infinite;
-    private SimpleShop plugin = SimpleShop.getPlugin(SimpleShop.class);
+    private QuickShop plugin = QuickShop.getPlugin(QuickShop.class);
 
     public Shop(ItemStack item, Player seller, int amountPerSell, int cost, int buffer) {
         this.item = item;

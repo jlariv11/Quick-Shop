@@ -1,10 +1,6 @@
-package main.jake.simpleshop;
+package main.jake.quickshop;
 
-import net.minecraft.server.v1_16_R3.EntityItem;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.craftbukkit.libs.jline.internal.Log;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,9 +13,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class Events implements Listener {
 
-    private SimpleShop plugin;
+    private QuickShop plugin;
 
-    public Events(SimpleShop plugin) {
+    public Events(QuickShop plugin) {
         this.plugin = plugin;
     }
 

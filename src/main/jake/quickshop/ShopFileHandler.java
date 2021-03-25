@@ -1,4 +1,4 @@
-package main.jake.simpleshop;
+package main.jake.quickshop;
 
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.libs.jline.internal.Log;
@@ -15,10 +15,10 @@ import java.util.Scanner;
 
 public class ShopFileHandler {
 
-    private SimpleShop plugin;
+    private QuickShop plugin;
     public final File shopfile = new File("plugins/SimpleShop/shops.txt");
 
-    public ShopFileHandler(SimpleShop plugin) {
+    public ShopFileHandler(QuickShop plugin) {
         this.plugin = plugin;
     }
 

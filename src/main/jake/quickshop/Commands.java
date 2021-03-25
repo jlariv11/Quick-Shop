@@ -1,27 +1,19 @@
-package main.jake.simpleshop;
+package main.jake.quickshop;
 
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Scanner;
 
 public class Commands implements CommandExecutor, Listener {
 
     public final String shop = "openshop";
     public final String adminShop = "adminshop";
     public final String removeShop = "removeshop";
-    private SimpleShop plugin;
+    private QuickShop plugin;
 
-    public Commands(SimpleShop plugin) {
+    public Commands(QuickShop plugin) {
         this.plugin = plugin;
     }
 

@@ -1,9 +1,8 @@
-package main.jake.simpleshop;
+package main.jake.quickshop;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -14,7 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimpleShop extends JavaPlugin {
+public class QuickShop extends JavaPlugin {
 
     FileConfiguration config = this.getConfig();
     List<Shop> shops = new ArrayList<>();
@@ -24,7 +23,7 @@ public class SimpleShop extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "SimpleShop has been ENABLED");
+        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "QuickShop has been ENABLED");
         getServer().getPluginManager().registerEvents(new Events(this), this);
         Commands commands = new Commands(this);
         getCommand(commands.shop).setExecutor(commands);
@@ -47,7 +46,7 @@ public class SimpleShop extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        getServer().getConsoleSender().sendMessage(ChatColor.RED + "SimpleShop has been DISABLED");
+        getServer().getConsoleSender().sendMessage(ChatColor.RED + "QuickShop has been DISABLED");
         fileHandler.write();
     }
 
