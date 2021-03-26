@@ -1,6 +1,6 @@
   name: QuickShop
   main: main.jake.quickshop.QuickShop
-  version: 1.0
+  version: 1.1
   author: jlariv11
   description: Adds easy to use shops using items as currency
   api-version: 1.16

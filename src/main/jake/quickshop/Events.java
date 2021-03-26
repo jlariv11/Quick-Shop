@@ -1,6 +1,9 @@
 package main.jake.quickshop;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -46,17 +49,18 @@ public class Events implements Listener {
                         if (moneyStack != null) {
                             moneyStack.setAmount(moneyStack.getAmount() - toRemove.getAmount());
                             shop.sell();
-                            int slot = getEmptyOrCompatibleSlot(clicker);
                             ItemStack toGive = shop.isInfinite() ? new ItemStack(plugin.currency, cost) : shop.getItem().clone();
+                            int slot = getEmptyOrCompatibleSlot(clicker, toGive);
                             toGive.setItemMeta(null);
                             if (slot == -1) {
                                 clicker.sendMessage(ChatColor.RED + "Your inventory is full. Your purchase has been dropped on the ground.");
                                 clicker.getWorld().dropItem(clicker.getLocation(), toGive);
-                            }
-                            if (clicker.getInventory().getItem(slot) == null) {
-                                clicker.getInventory().setItem(slot, toGive);
-                            } else {
-                                clicker.getInventory().addItem(toGive);
+                            }else {
+                                if (clicker.getInventory().getItem(slot) == null) {
+                                    clicker.getInventory().setItem(slot, toGive);
+                                } else {
+                                    clicker.getInventory().addItem(toGive);
+                                }
                             }
                             clicker.sendMessage("Item received!");
                             if(!shop.isInfinite() && shop.getBuffer() <= 0){
@@ -74,7 +78,7 @@ public class Events implements Listener {
             return;
         }
         if (e.getView().getTitle().equals("Sell an Item") || e.getView().getTitle().equals("Sell an Item(Infinite)")) {
-            if (e.getSlot() == 7) {
+            if (e.getRawSlot() == 7) {
                 ItemStack item = inv.getItem(7);
                 if (item != null) {
                     if (type == ClickType.LEFT) {
@@ -106,42 +110,68 @@ public class Events implements Listener {
                 }
                 e.setCancelled(true);
             }
-            if (e.getSlot() == 8 && inv.getItem(0) != null) {
+            if (e.getRawSlot() == 8) {
+                if (inv.getItem(0) != null) {
+                    ItemStack toSell = inv.getItem(0);
+                    ItemStack cost = inv.getItem(7);
+                    if (toSell == null || cost == null) {
+                        clicker.sendMessage("Item to sell or cost not specified");
+                        return;
+                    }
 
-                ItemStack toSell = inv.getItem(0);
-                ItemStack cost = inv.getItem(7);
-                if(toSell == null || cost == null){
-                    clicker.sendMessage("Item to sell or cost not specified");
-                    return;
-                }
-
-                int buffer = 0;
-                for (int i = 0; i < 6; i++) {
-                    ItemStack s = inv.getItem(i);
-                    if (s != null) {
-                        if (s.getType() == toSell.getType()) {
-                            buffer += s.getAmount();
-                        } else {
-                            clicker.getWorld().dropItem(clicker.getLocation(), s);
+                    int buffer = 0;
+                    for (int i = 0; i < 6; i++) {
+                        ItemStack s = inv.getItem(i);
+                        if (s != null) {
+                            if (s.getType() == toSell.getType()) {
+                                buffer += s.getAmount();
+                            } else {
+                                clicker.getWorld().dropItem(clicker.getLocation(), s);
+                            }
                         }
                     }
+                    if (e.getView().getTitle().equals("Sell an Item(Infinite)")) {
+                        plugin.shops.add(new Shop(inv.getItem(0), clicker, toSell.getAmount(), cost.getAmount(), -1));
+                    } else {
+                        plugin.shops.add(new Shop(inv.getItem(0), clicker, toSell.getAmount(), cost.getAmount(), buffer));
+                    }
+                    clicker.sendMessage("Shop Created!");
+                    clicker.closeInventory();
+                    plugin.setupandOpenShop(clicker);
+                }else{
+                    e.setCancelled(true);
                 }
-                if(e.getView().getTitle().equals("Sell an Item(Infinite)")){
-                    plugin.shops.add(new Shop(inv.getItem(0), clicker, toSell.getAmount(), cost.getAmount(), -1));
-                }else {
-                    plugin.shops.add(new Shop(inv.getItem(0), clicker, toSell.getAmount(), cost.getAmount(), buffer));
-                }
-                clicker.sendMessage("Shop Created!");
-                clicker.closeInventory();
-                plugin.setupandOpenShop(clicker);
             }
         }
         if(e.getView().getTitle().equals("Remove Shops")){
-            ItemStack stack = e.getInventory().getItem(e.getSlot());
+            ItemStack stack = inv.getItem(e.getSlot());
             Shop shop = getShopFromItemStack(stack);
             if(shop != null && stack != null){
+                int stacks = shop.getBuffer() / 64;
+                int remaining = shop.getBuffer() % 64;
+                ItemStack s = shop.getItem().clone();
+                s.setItemMeta(null);
+                for(int i = 0; i < stacks; i++){
+                    s.setAmount(64);
+                    int slot = getEmptyOrCompatibleSlot(clicker, s);
+                    if(slot != -1){
+                        clicker.getInventory().setItem(slot, s);
+                    }else{
+                        clicker.sendMessage(ChatColor.RED + "Your inventory is full. Your items have been dropped on the ground.");
+                        clicker.getWorld().dropItem(clicker.getLocation(), s);
+                    }
+                }
+                s.setAmount(remaining);
+                int slot = getEmptyOrCompatibleSlot(clicker, s);
+                if(slot != -1){
+                    clicker.getInventory().setItem(slot, s);
+                }else{
+                    clicker.sendMessage(ChatColor.RED + "Your inventory is full. Your items have been dropped on the ground.");
+                    clicker.getWorld().dropItem(clicker.getLocation(), s);
+                }
                 plugin.shops.remove(shop);
-                e.getWhoClicked().sendMessage("Shop Removed!");
+                shop.getSeller().sendMessage("Your shop has been deleted and your items have been returned to you!");
+                clicker.sendMessage("Shop Removed!");
                 stack.setAmount(0);
                 e.setCancelled(true);
             }
@@ -149,12 +179,19 @@ public class Events implements Listener {
 
     }
 
-    private int getEmptyOrCompatibleSlot(Player player) {
+    private int getEmptyOrCompatibleSlot(Player player, ItemStack compare) {
         PlayerInventory playerInv = player.getInventory();
         for (int i = 0; i < playerInv.getSize(); i++) {
+            if(i >= 36) {
+                break;
+            }
             ItemStack slotStack = playerInv.getItem(i);
-            if (slotStack == null || slotStack.getType() == plugin.currency) {
+            if (slotStack == null) {
                 return i;
+            }else if(slotStack.getType() == compare.getType()){
+                if(slotStack.getAmount() + compare.getAmount() <= 64){
+                    return i;
+                }
             }
         }
         return -1;

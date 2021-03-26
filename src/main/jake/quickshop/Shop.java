@@ -1,6 +1,7 @@
 package main.jake.quickshop;
 
 import org.bukkit.ChatColor;
+import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -51,8 +52,8 @@ public class Shop {
     public void sell(){
         if(!infinite) {
             buffer -= amountPerSell;
-            seller.sendMessage("Someone has purchased your " + item.getType().name());
-            int slot = getEmptyOrCompatibleSlot();
+            seller.sendMessage("Someone has purchased your " + item.getType().name().replace("_",  " "));
+            int slot = getEmptyOrCompatibleSlot(new ItemStack(plugin.currency, cost));
             PlayerInventory playerInv = seller.getInventory();
             if (slot == -1) {
                 seller.sendMessage(ChatColor.RED + "Your inventory is full. Your payment has been dropped on the ground.");
@@ -66,12 +67,19 @@ public class Shop {
         }
     }
 
-    private int getEmptyOrCompatibleSlot(){
-        PlayerInventory playerInv = seller.getInventory();
-        for(int i = 0; i < playerInv.getSize(); i++){
+    private int getEmptyOrCompatibleSlot(ItemStack compare) {
+        PlayerInventory playerInv = getSeller().getInventory();
+        for (int i = 0; i < playerInv.getSize(); i++) {
+            if(i >= 36) {
+                break;
+            }
             ItemStack slotStack = playerInv.getItem(i);
-            if(slotStack == null || slotStack.getType() == plugin.currency){
+            if (slotStack == null) {
                 return i;
+            }else if(slotStack.getType() == compare.getType()){
+                if(slotStack.getAmount() + compare.getAmount() <= 64){
+                    return i;
+                }
             }
         }
         return -1;
