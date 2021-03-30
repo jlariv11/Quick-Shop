@@ -21,6 +21,11 @@
       description: opens the remove shop interface
       permission: quickshop.remove
       permission-message: You do not have permission to use this command.
+    currency:
+      usage: /currency info /currency set <item>
+      description: changes the currency of the shops or lists the current currency
+      permission: quickshop.setcurrency
+      permission-message: You do not have permission to use this command.
 
     test:
       usage: /test

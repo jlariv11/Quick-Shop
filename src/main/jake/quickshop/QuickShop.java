@@ -29,6 +29,7 @@ public class QuickShop extends JavaPlugin {
         getCommand(commands.shop).setExecutor(commands);
         getCommand(commands.adminShop).setExecutor(commands);
         getCommand(commands.removeShop).setExecutor(commands);
+        getCommand(commands.currency).setExecutor(commands);
         //getCommand("test").setExecutor(commands);
         //config.addDefault("itemCurrency", true);
         config.addDefault("item", "DIAMOND");
