@@ -50,39 +50,19 @@ public class Shop {
     }
 
     public void sell(){
-        if(!infinite) {
+        if(seller == null) {
+            buffer -= amountPerSell;
+        }
+        if(!infinite && seller != null) {
             buffer -= amountPerSell;
             seller.sendMessage("Someone has purchased your " + item.getType().name().replace("_",  " "));
-            int slot = getEmptyOrCompatibleSlot(new ItemStack(plugin.currency, cost));
-            PlayerInventory playerInv = seller.getInventory();
-            if (slot == -1) {
+            int remainder = ItemStackHelper.addItemsToInventory(seller, new ItemStack(plugin.currency, cost));
+            if (remainder > 0) {
                 seller.sendMessage(ChatColor.RED + "Your inventory is full. Your payment has been dropped on the ground.");
-                seller.getWorld().dropItem(seller.getLocation(), new ItemStack(plugin.currency, cost));
+                seller.getWorld().dropItem(seller.getLocation(), new ItemStack(plugin.currency, remainder));
             }
-            if (playerInv.getItem(slot) == null) {
-                playerInv.setItem(slot, new ItemStack(plugin.currency, cost));
-            } else {
-                playerInv.addItem(new ItemStack(plugin.currency, cost));
-            }
-        }
-    }
 
-    private int getEmptyOrCompatibleSlot(ItemStack compare) {
-        PlayerInventory playerInv = getSeller().getInventory();
-        for (int i = 0; i < playerInv.getSize(); i++) {
-            if(i >= 36) {
-                break;
-            }
-            ItemStack slotStack = playerInv.getItem(i);
-            if (slotStack == null) {
-                return i;
-            }else if(slotStack.getType() == compare.getType()){
-                if(slotStack.getAmount() + compare.getAmount() <= 64){
-                    return i;
-                }
-            }
         }
-        return -1;
     }
 
 }

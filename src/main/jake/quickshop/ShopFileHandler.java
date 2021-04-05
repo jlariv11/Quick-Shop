@@ -16,7 +16,7 @@ import java.util.Scanner;
 public class ShopFileHandler {
 
     private QuickShop plugin;
-    public final File shopfile = new File("plugins/SimpleShop/shops.txt");
+    public final File shopfile = new File("plugins/QuickShop/shops.txt");
 
     public ShopFileHandler(QuickShop plugin) {
         this.plugin = plugin;
@@ -26,8 +26,13 @@ public class ShopFileHandler {
         try {
             FileWriter writer = new FileWriter(shopfile);
             for (Shop shop : plugin.shops) {
-                writer.write(shop.getItem().getType().name() + "," + shop.getItem().getAmount() + "," +
-                        shop.getSeller().getName() + "," + shop.getCost() + "," + shop.getAmountPerSell() + "," + shop.getBuffer() + "\n");
+                if(shop.getSeller() == null){
+                    writer.write(shop.getItem().getType().name() + "," + shop.getItem().getAmount() + "," +
+                            "#none#" + "," + shop.getCost() + "," + shop.getAmountPerSell() + "," + shop.getBuffer() + "\n");
+                }else {
+                    writer.write(shop.getItem().getType().name() + "," + shop.getItem().getAmount() + "," +
+                            shop.getSeller().getName() + "," + shop.getCost() + "," + shop.getAmountPerSell() + "," + shop.getBuffer() + "\n");
+                }
             }
             writer.close();
         }catch (IOException e){
@@ -45,7 +50,7 @@ public class ShopFileHandler {
                 Material m = Material.getMaterial(line[0]);
                 if(m != null) {
                     ItemStack stack = new ItemStack(m, Integer.parseInt(line[1]));
-                    Player seller = plugin.getServer().getPlayer(line[2]);
+                    Player seller = line[2].equals("#none#") ? null : plugin.getServer().getPlayer(line[2]);
                     int cost = Integer.parseInt(line[3]);
                     int amountPerSell = Integer.parseInt(line[4]);
                     int buffer = Integer.parseInt(line[5]);

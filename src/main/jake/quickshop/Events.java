@@ -14,6 +14,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Events implements Listener {
 
     private QuickShop plugin;
@@ -34,44 +37,38 @@ public class Events implements Listener {
         }
 
         if (e.getView().getTitle().equals("Shop")) {
-            if (e.getSlot() == inv.getSize() - 1) {
+            int compareSize = plugin.shops.size() == 0 ? 8 : (int) ((Math.ceil(plugin.shops.size() / 9.0) * 9) - 1);
+            if (e.getRawSlot() == compareSize) {
                 clicker.closeInventory();
                 plugin.setupAndOpenAddItem(clicker, false);
             }
-            if (e.getSlot() != inv.getSize() - 1) {
-                ItemStack stack = inv.getItem(e.getSlot());
+            if (e.getRawSlot() != inv.getSize() - 1 && e.getRawSlot() < plugin.shops.size()) {
+                ItemStack stack = inv.getItem(e.getRawSlot());
                 if (stack != null) {
-                    Shop shop = getShopFromItemStack(stack);
+                    Shop shop = plugin.shops.get(e.getRawSlot());
                     if (shop != null) {
                         int cost = shop.getCost();
                         ItemStack toRemove = shop.isInfinite() ? shop.getItem() : new ItemStack(plugin.currency, cost);
-                        ItemStack moneyStack = getMoney(clicker, toRemove);
-                        if (moneyStack != null) {
-                            moneyStack.setAmount(moneyStack.getAmount() - toRemove.getAmount());
+                        if (removeMoney(clicker, toRemove)) {
                             shop.sell();
                             ItemStack toGive = shop.isInfinite() ? new ItemStack(plugin.currency, cost) : shop.getItem().clone();
-                            int slot = getEmptyOrCompatibleSlot(clicker, toGive);
                             toGive.setItemMeta(null);
-                            if (slot == -1) {
+                            int remainder = ItemStackHelper.addItemsToInventory(clicker, toGive);
+                            if (remainder > 0) {
+                                toGive.setAmount(remainder);
                                 clicker.sendMessage(ChatColor.RED + "Your inventory is full. Your purchase has been dropped on the ground.");
                                 clicker.getWorld().dropItem(clicker.getLocation(), toGive);
-                            }else {
-                                if (clicker.getInventory().getItem(slot) == null) {
-                                    clicker.getInventory().setItem(slot, toGive);
-                                } else {
-                                    clicker.getInventory().addItem(toGive);
-                                }
                             }
-                            clicker.sendMessage("Item received!");
+                            clicker.sendMessage("Item received! " + shop.getBuffer());
                             if(!shop.isInfinite() && shop.getBuffer() <= 0){
                                 plugin.shops.remove(shop);
+                                clicker.closeInventory();
+                                plugin.setupandOpenShop(clicker);
                             }
-                            clicker.closeInventory();
-                            plugin.setupandOpenShop(clicker);
                         }else{
                             clicker.sendMessage("You don't have enough money!");
-                            e.setCancelled(true);
                         }
+                        e.setCancelled(true);
                     }
                 }
             }
@@ -144,30 +141,35 @@ public class Events implements Listener {
             }
         }
         if(e.getView().getTitle().equals("Remove Shops")){
-            ItemStack stack = inv.getItem(e.getSlot());
-            Shop shop = getShopFromItemStack(stack);
+            ItemStack stack = inv.getItem(e.getRawSlot());
+            Shop shop = plugin.shops.get(e.getRawSlot());
             if(shop != null && stack != null){
-                int stacks = shop.getBuffer() / 64;
-                int remaining = shop.getBuffer() % 64;
+                if(shop.getSeller() == null){
+                    plugin.shops.remove(shop);
+                    clicker.sendMessage("Shop Removed!");
+                    stack.setAmount(0);
+                    e.setCancelled(true);
+                    return;
+                }
+                int stacks = shop.getBuffer() / shop.getItem().getMaxStackSize();
+                int remaining = shop.getBuffer() % shop.getItem().getMaxStackSize();
                 ItemStack s = shop.getItem().clone();
                 s.setItemMeta(null);
                 for(int i = 0; i < stacks; i++){
-                    s.setAmount(64);
-                    int slot = getEmptyOrCompatibleSlot(clicker, s);
-                    if(slot != -1){
-                        clicker.getInventory().setItem(slot, s);
-                    }else{
+                    s.setAmount(shop.getItem().getMaxStackSize());
+                    int remainder = ItemStackHelper.addItemsToInventory(clicker, s);
+                    if(remainder > 0){
+                        ItemStack rem = new ItemStack(s.getType(), remainder);
                         clicker.sendMessage(ChatColor.RED + "Your inventory is full. Your items have been dropped on the ground.");
-                        clicker.getWorld().dropItem(clicker.getLocation(), s);
+                        clicker.getWorld().dropItem(clicker.getLocation(), rem);
                     }
                 }
                 s.setAmount(remaining);
-                int slot = getEmptyOrCompatibleSlot(clicker, s);
-                if(slot != -1){
-                    clicker.getInventory().setItem(slot, s);
-                }else{
+                int remainder = ItemStackHelper.addItemsToInventory(clicker, s);
+                if(remainder > 0){
+                    ItemStack rem = new ItemStack(s.getType(), remainder);
                     clicker.sendMessage(ChatColor.RED + "Your inventory is full. Your items have been dropped on the ground.");
-                    clicker.getWorld().dropItem(clicker.getLocation(), s);
+                    clicker.getWorld().dropItem(clicker.getLocation(), rem);
                 }
                 plugin.shops.remove(shop);
                 shop.getSeller().sendMessage("Your shop has been deleted and your items have been returned to you!");
@@ -179,47 +181,43 @@ public class Events implements Listener {
 
     }
 
-    private int getEmptyOrCompatibleSlot(Player player, ItemStack compare) {
-        PlayerInventory playerInv = player.getInventory();
-        for (int i = 0; i < playerInv.getSize(); i++) {
-            if(i >= 36) {
-                break;
-            }
-            ItemStack slotStack = playerInv.getItem(i);
-            if (slotStack == null) {
-                return i;
-            }else if(slotStack.getType() == compare.getType()){
-                if(slotStack.getAmount() + compare.getAmount() <= 64){
-                    return i;
+    private boolean removeMoney(Player player, ItemStack toRemove){
+
+        List<Integer> moneySlots = new ArrayList<>();
+
+        for(int i = 0; i < 36; i++){
+            ItemStack s = player.getInventory().getItem(i);
+            if(s != null){
+                if(s.isSimilar(toRemove)){
+                    moneySlots.add(i);
                 }
             }
         }
-        return -1;
-    }
-
-
-    private Shop getShopFromItemStack(ItemStack stack) {
-        for (Shop shop : plugin.shops) {
-            if (shop.getItem().equals(stack)) {
-                return shop;
+        int totalMoney = 0;
+        for(int i : moneySlots){
+            ItemStack s = player.getInventory().getItem(i);
+            if(s != null){
+                totalMoney += s.getAmount();
             }
         }
-        return null;
-    }
-
-    private ItemStack getMoney(Player player, ItemStack toRemove){
-
-        for(int i = 0; i < player.getInventory().getSize(); i++) {
-            ItemStack stack = player.getInventory().getItem(i);
-            if (stack != null) {
-                if (stack.getType() == toRemove.getType()) {
-                    if (stack.getAmount() >= toRemove.getAmount()) {
-                        return stack;
+        int totalAmtRemove = toRemove.getAmount();
+        if(totalMoney >= toRemove.getAmount()){
+            for(int i : moneySlots){
+                ItemStack s = player.getInventory().getItem(i);
+                if(s != null){
+                    int amtRemove = Math.min(totalAmtRemove, s.getAmount());
+                    s.setAmount(s.getAmount() - amtRemove);
+                    totalAmtRemove -= amtRemove;
+                    if(totalAmtRemove <= 0){
+                        break;
                     }
                 }
             }
+        }else{
+            return false;
         }
-        return null;
+
+        return true;
     }
 
 }
