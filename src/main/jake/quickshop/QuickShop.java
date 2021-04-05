@@ -1,8 +1,11 @@
 package main.jake.quickshop;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -11,13 +14,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class QuickShop extends JavaPlugin {
 
     FileConfiguration config = this.getConfig();
     List<Shop> shops = new ArrayList<>();
+    HashMap<Material, Integer> deals = new HashMap<>();
     ShopFileHandler fileHandler = new ShopFileHandler(this);
+    DealsFileHandler dealsFileHandler = new DealsFileHandler(this);
     public Material currency;
 
 
@@ -30,9 +37,16 @@ public class QuickShop extends JavaPlugin {
         getCommand(commands.adminShop).setExecutor(commands);
         getCommand(commands.removeShop).setExecutor(commands);
         getCommand(commands.currency).setExecutor(commands);
-        //getCommand("test").setExecutor(commands);
-        //config.addDefault("itemCurrency", true);
         config.addDefault("item", "DIAMOND");
+        config.addDefault("allowSpecialDeals", true);
+        config.addDefault("specialDealRollRate", 60);
+        config.addDefault("specialDealChance", 10);
+        HashMap<String, Integer> defaults = new HashMap<>();
+        defaults.put("IRON_INGOT", 1);
+        defaults.put("GOLD_INGOT", 1);
+        defaults.put("EMERALD", 2);
+        config.addDefault("specialDeals", defaults);
+        dealsFileHandler.read();
         config.options().copyDefaults(true);
         saveConfig();
         shops = fileHandler.read();
@@ -43,12 +57,30 @@ public class QuickShop extends JavaPlugin {
             currency = Material.DIAMOND;
         }
 
+        if(config.getBoolean("allowSpecialDeals")) {
+            getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+                @Override
+                public void run() {
+                    Random rand = new Random();
+                    int num = rand.nextInt(101);
+                    if (num <= config.getInt("specialDealChance")) {
+                        Material m = getRandMaterial();
+                        ItemStack stack = new ItemStack(m);
+                        shops.add(new Shop(stack, null, 1, deals.get(m), rand.nextInt(128)));
+                        getServer().broadcastMessage("[QuickShop] Special Deal Added to Shops! 1 " + m.name() + " for " + deals.get(m) + " " + currency.name() + "!");
+                    }
+                }
+            }, config.getInt("specialDealRollRate") * 20L, config.getInt("specialDealRollRate") * 20L);
+        }
+
     }
 
     @Override
     public void onDisable() {
         getServer().getConsoleSender().sendMessage(ChatColor.RED + "QuickShop has been DISABLED");
         fileHandler.write();
+        dealsFileHandler.write();
+
     }
 
     public void setupandOpenShop(Player player){
@@ -111,10 +143,10 @@ public class QuickShop extends JavaPlugin {
             Shop shop = shops.get(i);
             ItemStack s = shop.getItem();
             ItemMeta m = s.getItemMeta();
-            if(shop.getSeller().getUniqueId().equals(player.getUniqueId()) || player.isOp()) {
+            if(player.isOp() && shop.getSeller() == null || shop.getSeller().getUniqueId().equals(player.getUniqueId()) || player.isOp()) {
                 if (m != null) {
                     List<String> lore = new ArrayList<>();
-                    lore.add(player.getDisplayName() + "'s " + "Shop");
+                    lore.add(shop.getSeller() == null ? "Deal Shop" : shop.getSeller().getDisplayName() + "'s " + "Shop");
                     m.setLore(lore);
                     s.setItemMeta(m);
                     removeShopInv.setItem(i, s);
@@ -122,6 +154,11 @@ public class QuickShop extends JavaPlugin {
             }
         }
         player.openInventory(removeShopInv);
+    }
+
+    private Material getRandMaterial(){
+        List<Material> mats = new ArrayList<>(deals.keySet());
+        return mats.get(new Random().nextInt(mats.size()));
     }
 
 }
