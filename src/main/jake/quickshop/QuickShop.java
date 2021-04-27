@@ -1,11 +1,9 @@
 package main.jake.quickshop;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -20,35 +18,29 @@ import java.util.Random;
 
 public class QuickShop extends JavaPlugin {
 
-    FileConfiguration config = this.getConfig();
-    List<Shop> shops = new ArrayList<>();
-    HashMap<Material, Integer> deals = new HashMap<>();
-    ShopFileHandler fileHandler = new ShopFileHandler(this);
-    DealsFileHandler dealsFileHandler = new DealsFileHandler(this);
+    public FileConfiguration config = this.getConfig();
+    public List<Shop> shops = new ArrayList<>();
+    public HashMap<Material, Integer> deals = new HashMap<>();
+    private ShopFileHandler fileHandler = new ShopFileHandler(this);
+    public ConfigHandler configHandler = new ConfigHandler(this);
     public Material currency;
-
 
     @Override
     public void onEnable() {
         getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "QuickShop has been ENABLED");
         getServer().getPluginManager().registerEvents(new Events(this), this);
+
         Commands commands = new Commands(this);
-        getCommand(commands.shop).setExecutor(commands);
-        getCommand(commands.adminShop).setExecutor(commands);
-        getCommand(commands.removeShop).setExecutor(commands);
-        getCommand(commands.currency).setExecutor(commands);
-        config.addDefault("item", "DIAMOND");
-        config.addDefault("allowSpecialDeals", true);
-        config.addDefault("specialDealRollRate", 60);
-        config.addDefault("specialDealChance", 10);
-        HashMap<String, Integer> defaults = new HashMap<>();
-        defaults.put("IRON_INGOT", 1);
-        defaults.put("GOLD_INGOT", 1);
-        defaults.put("EMERALD", 2);
-        config.addDefault("specialDeals", defaults);
-        dealsFileHandler.read();
-        config.options().copyDefaults(true);
-        saveConfig();
+        for(String name : commands.COMMANDS){
+            PluginCommand cmd = getCommand(name);
+            if(cmd != null){
+                cmd.setExecutor(commands);
+            }
+        }
+
+        configHandler.read();
+        configHandler.defaults();
+
         shops = fileHandler.read();
         String material = config.getString("item");
         if(material != null) {
@@ -79,7 +71,7 @@ public class QuickShop extends JavaPlugin {
     public void onDisable() {
         getServer().getConsoleSender().sendMessage(ChatColor.RED + "QuickShop has been DISABLED");
         fileHandler.write();
-        dealsFileHandler.write();
+        configHandler.write();
 
     }
 

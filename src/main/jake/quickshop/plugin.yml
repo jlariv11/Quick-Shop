@@ -1,6 +1,6 @@
   name: QuickShop
   main: main.jake.quickshop.QuickShop
-  version: 1.2
+  version: 1.3
   author: jlariv11
   description: Adds easy to use shops using items as currency
   api-version: 1.16
@@ -26,6 +26,12 @@
       description: changes the currency of the shops or lists the current currency
       permission: quickshop.setcurrency
       permission-message: You do not have permission to use this command.
+    deals:
+      usage: /deals add <item> <cost> /deals info
+      description: adds a deal that can be added to the shops or lists the current possible deals
+      permission: quickshop.deals
+      permission-message: You do not have permission to use this command.
+
 
     test:
       usage: /test

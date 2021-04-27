@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.libs.jline.internal.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 
@@ -14,7 +15,10 @@ public class Commands implements CommandExecutor, Listener {
     public final String adminShop = "adminshop";
     public final String removeShop = "removeshop";
     public final String currency = "currency";
+    public final String deals = "deals";
     private QuickShop plugin;
+    public final String[] COMMANDS = {shop, adminShop, removeShop, currency, deals};
+
 
     public Commands(QuickShop plugin) {
         this.plugin = plugin;
@@ -69,6 +73,33 @@ public class Commands implements CommandExecutor, Listener {
                 }else{
                     commandSender.sendMessage(ChatColor.RED + "Invalid use of command.");
                     return false;
+                }
+            case deals:
+                if(strings.length == 0){
+                    commandSender.sendMessage(ChatColor.RED + "Invalid use of command.");
+                    return false;
+                }
+                if(strings[0].equals("add") && strings.length > 2){
+                    try{
+                        Material m = Material.matchMaterial(strings[1]);
+                        int cost = Integer.parseInt(strings[2]);
+                        if (m != null) {
+                            plugin.deals.put(m, cost);
+                            plugin.configHandler.write();
+                            commandSender.sendMessage("Deal: " + m.name() + " for " + cost + " added");
+                        }else {
+                            commandSender.sendMessage("Material: " + strings[1] + " does not exist.");
+                        }
+                    }catch (NumberFormatException e){
+                        commandSender.sendMessage(ChatColor.RED + "You must specify the cost of the deal");
+                        return false;
+                    }
+                }else if(strings[0].equals("info")){
+                    commandSender.sendMessage("Current Deals:");
+                    for(Material m : plugin.deals.keySet()){
+                        commandSender.sendMessage(m.name() + ": Cost: " + plugin.deals.get(m));
+                    }
+
                 }
                 return true;
 
