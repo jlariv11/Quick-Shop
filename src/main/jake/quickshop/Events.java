@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -23,6 +24,14 @@ public class Events implements Listener {
 
     public Events(QuickShop plugin) {
         this.plugin = plugin;
+    }
+
+
+    @EventHandler
+    public void invCloseEvent(InventoryCloseEvent e){
+        if(e.getView().getTitle().equals("Sell an Item") || e.getView().getTitle().equals("Sell an Item(Infinite)")){
+            //ItemStackHelper.removeItemsFromInventory((Player) e.getPlayer(), new ItemStack(plugin.currency));
+        }
     }
 
     @EventHandler
@@ -80,23 +89,27 @@ public class Events implements Listener {
                 if (item != null) {
                     if (type == ClickType.LEFT) {
                         if (item.getAmount() + 1 > 64) {
+                            e.setCancelled(true);
                             return;
                         }
                         item.setAmount(item.getAmount() + 1);
                     } else if (type == ClickType.SHIFT_LEFT) {
                         if (item.getAmount() + 10 > 64) {
                             item.setAmount(64);
+                            e.setCancelled(true);
                             return;
                         }
                         item.setAmount(item.getAmount() + 10);
                     } else if (type == ClickType.RIGHT) {
                         if (item.getAmount() - 1 < 1) {
+                            e.setCancelled(true);
                             return;
                         }
                         item.setAmount(item.getAmount() - 1);
                     } else if (type == ClickType.SHIFT_RIGHT) {
                         if (item.getAmount() - 10 < 1) {
                             item.setAmount(1);
+                            e.setCancelled(true);
                             return;
                         }
                         item.setAmount(item.getAmount() - 10);

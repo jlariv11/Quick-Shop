@@ -45,5 +45,18 @@ public class ItemStackHelper {
         return stack.getAmount();
     }
 
+    public static void removeItemsFromInventory(Player player, ItemStack stack){
+        PlayerInventory inv = player.getInventory();
+        for (int i = 0; i < 36; i++) {
+            ItemStack s = inv.getItem(i);
+            if (s != null) {
+                if (s.getItemMeta().getDisplayName().contains("Cost:") && s.getType() == stack.getType()) {
+                    s.setAmount(0);
+                }
+            }
+
+        }
+    }
+
 
 }
