@@ -3,7 +3,7 @@
   version: 1.4
   author: jlariv11
   description: Adds easy to use shops using items as currency
-  api-version: 1.17.1
+  api-version: 1.17
 
   commands:
     openshop:
